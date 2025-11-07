@@ -5,9 +5,10 @@ image:
   tag: "{{ tag }}"
 
 service:
-  port: 80           # puerto expuesto al cluster (externo)
-  targetPort: 8080   # puerto dentro del contenedor
+  type: ClusterIP
+  port: 80          # Puerto expuesto al cluster (externo)
+  targetPort: 8080  # Puerto interno del contenedor (Dockerfile)
 
 route:
   enabled: true
-  host: ""
+  host: ""          # Deja vacío para que OpenShift genere automáticamente el hostname

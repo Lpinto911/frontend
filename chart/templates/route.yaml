@@ -9,6 +9,6 @@ spec:
     kind: Service
     name: frontend
   port:
-    targetPort: 80
+    targetPort: 8080   # <-- antes era 80
   tls:
     termination: edge
