@@ -20,12 +20,19 @@ FROM nginx:alpine
 # Copia los archivos compilados del build anterior
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Ajuste para OpenShift: redirige cache y temporales a /tmp
-RUN mkdir -p /tmp/nginx_cache && chmod -R 777 /tmp/nginx_cache
-RUN sed -i 's|/var/cache/nginx|/tmp/nginx_cache|g' /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# Crear un directorio de caché accesible para el usuario no root (OpenShift)
+RUN mkdir -p /tmp/nginx_cache /var/cache/nginx \
+    && chmod -R 777 /tmp/nginx_cache /var/cache/nginx
 
-# Nginx escucha en el puerto 8080 (recomendado para OpenShift)
-EXPOSE 8080
+# Ajustar configuración de Nginx para usar el nuevo path
+RUN sed -i 's|/var/cache/nginx|/tmp/nginx_cache|g' \
+    /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Variable de entorno usada por Nginx en tiempo de ejecución
+ENV NGINX_CACHE_PATH=/tmp/nginx_cache
+
+# Nginx escucha en el puerto 80 (OpenShift maneja el mapeo)
+EXPOSE 80
 
 # Ejecuta nginx en primer plano
 CMD ["nginx", "-g", "daemon off;"]
