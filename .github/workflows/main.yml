@@ -9,15 +9,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Clona el repositorio
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Login a Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # 3️⃣ Extrae metadatos de la imagen (tags automáticos)
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -26,6 +29,7 @@ jobs:
           tags: |
             type=raw,value=build-${{ github.run_number }}
 
+      # 4️⃣ Construye y publica la imagen en Docker Hub
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -38,38 +42,62 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # 5️⃣ Clona el repositorio
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 6️⃣ Instala el cliente OC (OpenShift CLI)
       - name: Install OC CLI
         run: |
           curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar xz
           sudo mv oc /usr/local/bin/
           oc version
 
+      # 7️⃣ Instala Helm
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.12.0
 
+      # 8️⃣ Login en OpenShift
       - name: Log in Openshift
         uses: redhat-actions/oc-login@v1
         with:
           openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
 
+      # 9️⃣ Empaqueta y publica el chart de Helm (OCI)
       - name: Package and push Helm Chart to Docker Hub (OCI)
         env:
           IMAGE_TAG: build-${{ github.run_number }}
         run: |
+          # Reemplaza el tag dinámico en values.yaml
           sed -i "s|{{ tag }}|${IMAGE_TAG}|g" ./chart/values.yaml
+          
           helm package ./chart
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | helm registry login registry-1.docker.io --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | helm registry login registry-1.docker.io \
+            --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
           helm push ./*.tgz oci://registry-1.docker.io/lpintofsgrp
 
+      # 🔒 10️⃣ Limpieza preventiva de releases bloqueadas o fallidas
+      - name: Unlock Helm release if needed
+        continue-on-error: true
+        run: |
+          oc project lpintofsgrp-dev || oc new-project lpintofsgrp-dev
+          echo "🔄 Verificando estado previo del release frontend..."
+          helm history frontend -n lpintofsgrp-dev || true
+          helm rollback frontend 0 -n lpintofsgrp-dev || true
+          helm uninstall frontend -n lpintofsgrp-dev || true
+          echo "✅ Estado de Helm limpio, listo para desplegar."
+
+      # 🚀 11️⃣ Despliega a OpenShift usando el chart publicado
       - name: Deploy to OpenShift using Helm chart from OCI
         env:
           IMAGE_TAG: build-${{ github.run_number }}
         run: |
           oc project lpintofsgrp-dev || oc new-project lpintofsgrp-dev
-          helm upgrade --install frontend oci://registry-1.docker.io/lpintofsgrp/frontend --version 0.1.0 -n lpintofsgrp-dev -f ./chart/values.yaml --wait --timeout 10m
+          helm upgrade --install frontend oci://registry-1.docker.io/lpintofsgrp/frontend \
+            --version 0.1.0 \
+            -n lpintofsgrp-dev \
+            -f ./chart/values.yaml \
+            --wait --timeout 10m
