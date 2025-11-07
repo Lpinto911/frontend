@@ -1,0 +1,9 @@
+replicaCount: 2
+image:
+  repository: registry-1.docker.io/lpintofsgrp/frontend
+  tag: "{{ tag }}"
+service:
+  port: 80
+route:
+  enabled: true
+  host: ""
