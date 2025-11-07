@@ -1,9 +1,13 @@
 replicaCount: 2
+
 image:
   repository: registry-1.docker.io/lpintofsgrp/frontend
   tag: "{{ tag }}"
+
 service:
-  port: 80
+  port: 80           # puerto expuesto al cluster (externo)
+  targetPort: 8080   # puerto dentro del contenedor
+
 route:
   enabled: true
   host: ""
