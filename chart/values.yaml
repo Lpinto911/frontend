@@ -1,14 +1,13 @@
-replicaCount: 2
-
-image:
-  repository: registry-1.docker.io/lpintofsgrp/frontend
-  tag: "{{ tag }}"
-
-service:
-  type: ClusterIP
-  port: 80          # Puerto expuesto al cluster (externo)
-  targetPort: 8080  # Puerto interno del contenedor (Dockerfile)
-
-route:
-  enabled: true
-  host: ""          # Deja vacío para que OpenShift genere automáticamente el hostname
+frontend:
+  replicaCount: 2
+  image:
+    repository: registry-1.docker.io/lpintofsgrp/frontend
+    tag: "{{ tag }}"
+  service:
+    port: 80          # Puerto que expone el Service dentro del cluster y recibe la Route
+    targetPort: 8081  # Puerto del contenedor
+  route:
+    enabled: true
+    host: ""
+  env:
+    REACT_APP_API_URL: "https://backend-api-lpintofsgrp-dev.apps.rm1.0a51.p1.openshiftapps.com:8080"

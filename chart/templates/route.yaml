@@ -9,6 +9,7 @@ spec:
     kind: Service
     name: frontend
   port:
-    targetPort: 8080   # <-- antes era 80
+    targetPort: {{ .Values.service.targetPort }}
   tls:
     termination: edge
+

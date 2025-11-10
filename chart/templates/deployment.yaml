@@ -18,7 +18,7 @@ spec:
       - name: frontend
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         ports:
-        - containerPort: 8080
+        - containerPort: {{ .Values.service.targetPort }}
         env:
         - name: REACT_APP_API_URL
           value: "http://backend-api:8080"
