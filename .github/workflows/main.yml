@@ -115,5 +115,6 @@ jobs:
             oc expose service frontend -n lpintofsgrp-dev
           fi
 
-          ROUTE_URL=$(oc get route frontend -n lpintofsgrp-dev -o jsonpath='{.spec.host}')
-          echo "✅ Ruta expuesta correctamente: https://${RO
+          ROUTE_URL=$(oc get route frontend -n lpintofsgrp-dev -o jsonpath="{.spec.host}")
+          echo "✅ Ruta expuesta correctamente: https://${ROUTE_URL}"
+          echo "route_url=https://${ROUTE_URL}" >> $GITHUB_OUTPUT
