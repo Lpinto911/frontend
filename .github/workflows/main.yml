@@ -41,6 +41,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      route_url: ${{ steps.expose.outputs.route_url }}
+
     steps:
       # 5️⃣ Clona el repositorio
       - name: Checkout repository
@@ -71,9 +74,7 @@ jobs:
         env:
           IMAGE_TAG: build-${{ github.run_number }}
         run: |
-          # Reemplaza el tag dinámico en values.yaml
           sed -i "s|{{ tag }}|${IMAGE_TAG}|g" ./chart/values.yaml
-          
           helm package ./chart
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | helm registry login registry-1.docker.io \
             --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
@@ -101,3 +102,18 @@ jobs:
             -n lpintofsgrp-dev \
             -f ./chart/values.yaml \
             --wait --timeout 10m
+
+      # 🌐 12️⃣ Expone el servicio "frontend" públicamente en OpenShift
+      - name: Expose frontend service
+        id: expose
+        run: |
+          oc project lpintofsgrp-dev
+          if oc get route frontend -n lpintofsgrp-dev >/dev/null 2>&1; then
+            echo "🌍 La ruta 'frontend' ya existe. Omitiendo creación."
+          else
+            echo "🌐 Creando ruta para el servicio frontend..."
+            oc expose service frontend -n lpintofsgrp-dev
+          fi
+
+          ROUTE_URL=$(oc get route frontend -n lpintofsgrp-dev -o jsonpath='{.spec.host}')
+          echo "✅ Ruta expuesta correctamente: https://${RO
