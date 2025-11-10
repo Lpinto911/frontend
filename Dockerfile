@@ -27,9 +27,9 @@ RUN sed -i 's|/var/cache/nginx|/tmp/nginx_cache|g' \
  && sed -i 's|/run/nginx.pid|/tmp/run/nginx.pid|g' /etc/nginx/nginx.conf
 
 # Cambiar el puerto de escucha a 8080
-RUN sed -i 's|listen       80;|listen       8081;|g' /etc/nginx/conf.d/default.conf
+RUN sed -i 's|listen       80;|listen       8080;|g' /etc/nginx/conf.d/default.conf
 
-EXPOSE 8081
+EXPOSE 8080
 ENV NGINX_CACHE_PATH=/tmp/nginx_cache
 
 CMD ["nginx", "-g", "daemon off;"]

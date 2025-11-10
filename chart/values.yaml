@@ -4,7 +4,7 @@
     tag: "{{ tag }}"
   service:
     port: 80          # Puerto que expone el Service dentro del cluster y recibe la Route
-    targetPort: 8081  # Puerto del contenedor
+    targetPort: 8080  # Puerto del contenedor
   route:
     enabled: true
     host: ""
